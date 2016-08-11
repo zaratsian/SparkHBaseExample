@@ -4,31 +4,64 @@ import org.apache.spark.{SparkContext, SparkConf}
 import scala.collection.mutable.HashMap
 import scala.io.Source.fromFile
 
+
+
+
+import com.typesafe.config.ConfigFactory  
+
+import org.apache.hadoop.hbase.HBaseConfiguration
+import org.apache.hadoop.hbase.client.Scan
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil
+import org.apache.hadoop.hbase.mapreduce.{TableInputFormat, TableSnapshotInputFormat}
+import org.apache.hadoop.hbase.util.Base64
+
+import org.apache.hadoop.mapreduce.Job
+
+import org.apache.hadoop.fs.Path
+import java.lang.String
+
+import org.apache.hadoop.conf._
+import org.apache.hadoop.fs._
+
+
 object SparkHBase{
+
   def main(args: Array[String]) {
-    val props = getProps(args(0))
+    val config = ConfigFactory.load()
+    val hbaseRootDir =  "/apps/hbase"
+    val sparkConf = new SparkConf()
+      .setAppName("testnsnap")
+      //.setMaster(config.getString("spark.app.master"))
+      //.setJars(SparkContext.jarOfObject(this))
+      //.set("spark.executor.memory", "2g")
+      //.set("spark.default.parallelism", "160")
 
-    val srcTable = getArrayProp(props, "srcTables").map(t=>t.toUpperCase)
-
-    val zkUrl = props.getOrElse("zkUrl", "localhost:2181:/hbase-unsecure")
-
-    // Create SparkContext
-    val sparkConf = new SparkConf().setAppName("SparkHBase")
     val sc = new SparkContext(sparkConf)
 
-    val rdd = sc.newAPIHadoopRDD...
+    println("Creating hbase configuration")
+    val conf = HBaseConfiguration.create()
 
-    sc.stop()
+    conf.set("hbase.rootdir", hbaseRootDir)
+    conf.set("hbase.zookeeper.quorum",  "localhost:2181:/hbase-unsecure")
+    val scan = new Scan
+    conf.set(TableInputFormat.SCAN, convertScanToString(scan))
+
+    val job = Job.getInstance(conf)
+
+    TableSnapshotInputFormat.setInput(job, "customer_info_ss2", new Path("/tmp/.hbase-snapshot/customer_info_ss2"))
+
+    val hBaseRDD = sc.newAPIHadoopRDD(job.getConfiguration, classOf[TableSnapshotInputFormat],
+      classOf[org.apache.hadoop.hbase.io.ImmutableBytesWritable],
+      classOf[org.apache.hadoop.hbase.client.Result])
+
+    println(hBaseRDD.count())
+
+    System.exit(0)
   }
 
-  def getArrayProp(props: => HashMap[String,String], prop: => String): Array[String] = {
-    return props.getOrElse(prop, "").split(",").filter(x => !x.equals(""))
+  def convertScanToString(scan : Scan) = {
+      val proto = ProtobufUtil.toScan(scan);
+      Base64.encodeBytes(proto.toByteArray());
   }
 
-  def getProps(file: => String): HashMap[String,String] = {
-    var props = new HashMap[String,String]
-    val lines = fromFile(file).getLines
-    lines.foreach(x => if (x contains "=") props.put(x.split("=")(0), if (x.split("=").size > 1) x.split("=")(1) else null))
-    props
-  }
 }
