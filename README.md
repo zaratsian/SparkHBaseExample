@@ -1,4 +1,4 @@
-<h3>Hbase to Spark Example</h3>
+<h3>Hbase Snapshot to Spark Example</h3>
 <p>
 This is a work in progress. The goal is to analyze an Hbase Snapshot with Spark (at the variable-level with timestamps).
 <br>
