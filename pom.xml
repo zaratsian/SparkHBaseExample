@@ -8,8 +8,8 @@
   <version>0.0.1-SNAPSHOT</version>
 
   <properties>
-    <hdp.version>2.3.4.0-3485</hdp.version>
-    <spark.version>2.0.0</spark.version>
+    <hdp.version>2.4.0.0-169</hdp.version>
+    <spark.version>1.6.0</spark.version>
     <scala.version>2.11</scala.version>
   </properties>
 
@@ -34,8 +34,9 @@
     </repository>
   </repositories>
 
-  <dependencies>
 
+
+  <dependencies>
 
 
 
@@ -44,29 +45,32 @@
     <groupId>com.typesafe</groupId>
     <artifactId>config</artifactId>
     <version>1.2.1</version>
+    <scope>provided</scope>
 </dependency>
 
 <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-client -->
 <dependency>
     <groupId>org.apache.hbase</groupId>
     <artifactId>hbase-client</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
+    <scope>provided</scope>
 </dependency>
 
 <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-common -->
 <dependency>
     <groupId>org.apache.hbase</groupId>
     <artifactId>hbase-common</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
+    <scope>provided</scope>
 </dependency>
 
 <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-server -->
 <dependency>
     <groupId>org.apache.hbase</groupId>
     <artifactId>hbase-server</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
+    <scope>provided</scope>
 </dependency>
-
 
 <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common -->
 <dependency>
@@ -75,8 +79,6 @@
     <version>2.6.0</version>
     <scope>provided</scope>
 </dependency>
-
-
 
 
 
