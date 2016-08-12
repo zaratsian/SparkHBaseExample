@@ -1,4 +1,4 @@
-package com.github.randerzander.SparkHBase;
+package com.github.zaratsian.SparkHBase;
 
 import org.apache.spark.{SparkContext, SparkConf}
 import scala.collection.mutable.HashMap
