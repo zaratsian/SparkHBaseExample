@@ -4,11 +4,6 @@ import org.apache.spark.{SparkContext, SparkConf}
 import scala.collection.mutable.HashMap
 import scala.io.Source.fromFile
 
-
-
-
-import com.typesafe.config.ConfigFactory  
-
 import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil
@@ -29,20 +24,13 @@ object SparkHBase{
   def main(args: Array[String]) {
     val props = getProps(args(0))
 
-    val config = ConfigFactory.load()
-    val sparkConf = new SparkConf()
-      .setAppName("testnsnap")
-      //.setMaster(config.getString("spark.app.master"))
-      //.setJars(SparkContext.jarOfObject(this))
-      //.set("spark.executor.memory", "2g")
-      //.set("spark.default.parallelism", "160")
-
+    val sparkConf = new SparkConf().setAppName(props.getOrElse("spark.appName", "test"))
     val sc = new SparkContext(sparkConf)
 
     println("Creating hbase configuration")
     val conf = HBaseConfiguration.create()
 
-    conf.set("hbase.rootdir", props.getOrElse("hbase.rootdir", "/apps/hbase"))
+    conf.set("hbase.rootdir", props.getOrElse("hbase.rootdir", "/apps/hbase/data"))
     conf.set("hbase.zookeeper.quorum",  props.getOrElse("hbase.zookeeper.quorum", "localhost:2181:/hbase-unsecure"))
 
     val scan = new Scan
@@ -50,7 +38,7 @@ object SparkHBase{
 
     val job = Job.getInstance(conf)
 
-    val path = new Path(props.getOrElse("hbase.snapshot.path", "/apps/hbase/.hbase-snapshot"))
+    val path = new Path(props.getOrElse("hbase.snapshot.path", "/apps/hbase/data/.hbase-snapshot"))
     val snapName = props.getOrElse("hbase.snapshot.name", "test")
     TableSnapshotInputFormat.setInput(job, snapName, path)
 

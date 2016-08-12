@@ -1,6 +1,6 @@
-hbase.rootdir=/apps/hbase
+hbase.rootdir=/apps/hbase/data
 hbase.zookeeper.quorum=localhost:2181:/hbase-unsecure
-hbase.snapshot.name=customer_info_ss2
-hbase.snapshot.path=/user/root/.hbase-snapshot/customer_info_ss2
+hbase.snapshot.name=customer_info_ss
+hbase.snapshot.path=/user/hbase
 
 spark.appname=testsnap
