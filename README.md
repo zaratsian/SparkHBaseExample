@@ -13,18 +13,20 @@ Currently, there are a few different ways to process HBase Snapshots (using Hive
 <br>
 Here is the sample HBase:
 <br>
-hbase(main):006:0* scan "customer_info"
-ROW                                           COLUMN+CELL                                                                   
- 1                                            column=profile:balance, timestamp=1471027586646, value=100000                  
- 1                                            column=profile:location, timestamp=1471027586577, value=north carolina        
- 1                                            column=profile:name, timestamp=1471027586494, value=frank                      
- 2                                            column=profile:balance, timestamp=1471027586812, value=90000                   
- 2                                            column=profile:location, timestamp=1471027586742, value=new york               
- 2                                            column=profile:name, timestamp=1471027586707, value=dean                       
- 3                                            column=profile:balance, timestamp=1471027588418, value=75000                   
- 3                                            column=profile:location, timestamp=1471027586882, value=nevada                 
- 3                                            column=profile:name, timestamp=1471027586854, value=sammy                      
-3 row(s) in 0.8790 seconds
+<code>
+hbase(main):006:0*  scan "customer_info"
+<br>ROW                                           COLUMN+CELL                                                       
+<br> 1                                            column=profile:balance, timestamp=1471027586646, value=100000              
+<br> 1                                            column=profile:location, timestamp=1471027586577, value=north carolina     
+<br> 1                                            column=profile:name, timestamp=1471027586494, value=frank                  
+<br> 2                                            column=profile:balance, timestamp=1471027586812, value=90000               
+<br> 2                                            column=profile:location, timestamp=1471027586742, value=new york           
+<br> 2                                            column=profile:name, timestamp=1471027586707, value=dean                  
+<br> 3                                            column=profile:balance, timestamp=1471027588418, value=75000               
+<br> 3                                            column=profile:location, timestamp=1471027586882, value=nevada            
+<br> 3                                            column=profile:name, timestamp=1471027586854, value=sammy                
+<br>3 row(s) in 0.8790 seconds
+</code>
 <br>
 <br>
 This code was tested using <a href="http://hortonworks.com/products/data-center/hdp/">Hortonworks HDP</a> 2.4.2.0-258 
