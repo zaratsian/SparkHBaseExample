@@ -17,8 +17,9 @@ Here is the HBase table:
 The output is a filtered list of records that are more recent (newer) than the user-defined timestamp
 <img src="screenshots/hbase_spark_output.png" class="inline"/>
 <br>
-This code was tested using <a href="http://hortonworks.com/products/data-center/hdp/">Hortonworks HDP</a> 2.4.2.0-258 
 <br>
+<br><b>Versions:</b>
+<br>This code was tested using <a href="http://hortonworks.com/products/data-center/hdp/">Hortonworks HDP</a> 2.4.2.0-258 
 <br>HBase version 1.1.2.2.4.2.0-258
 <br>Spark version 1.6.1
 <br>Scala version 2.10.5 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_40) 
