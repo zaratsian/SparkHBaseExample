@@ -12,11 +12,11 @@ Currently, there are a few different ways to process HBase Snapshots (using Hive
 <br>
 <br>
 Here is the HBase table:
-<img src="images/hbase_records.png" class="inline"/>
+<img src="hbase_records.png" class="inline"/>
 <br>
 <br>
 The output is a filtered list of records that are more recent (newer) than the user-defined timestamp
-<img src="images/hbase_spark_output.png" class="inline"/>
+<img src="hbase_spark_output.png" class="inline"/>
 <br>
 This code was tested using <a href="http://hortonworks.com/products/data-center/hdp/">Hortonworks HDP</a> 2.4.2.0-258 
 <br>HBase Version 1.1.2.2.4.2.0-258
