@@ -18,7 +18,7 @@ Currently, there are a few different ways to process HBase Snapshots (using Hive
 <img src="screenshots/hbase_spark_output_raw.png" class="inline"/>
 <br>
 <br>
-<b>Filtered Output from Spark<br>: This is a filtered list of records that are more recent (newer) and the user-defined timestamp/threshold value.
+<b>Filtered Output from Spark</b>: This is a filtered list of records that are more recent (newer) and the user-defined timestamp/threshold value.
 <img src="screenshots/hbase_spark_output.png" class="inline"/>
 <br>
 <br>
