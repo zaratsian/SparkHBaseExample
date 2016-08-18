@@ -10,15 +10,15 @@ Currently, there are a few different ways to process HBase Snapshots (using Hive
 <br>Spark: <code>spark-submit --class com.github.zaratsian.SparkHBase.SparkHBase --master yarn-client /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar props</code>
 <br>
 <br>
-<b>HBase Table</b>: This is the sample table that we started with within HBase. From here we took a snapshot and sent it into HDFS using this syntax: <code>hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot customer_info_ss -copy-to hdfs://localhost:8020/tmp/ -mappers 1</code>.
+<b>HBase Table</b>: This is the sample table that was used for this project. From here, I took a snapshot and sent it into HDFS using this syntax: <code>hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot customer_info_ss -copy-to hdfs://localhost:8020/tmp/ -mappers 1</code>.
 <img src="screenshots/hbase_records.png" class="inline"/>
 <br>
 <br>
-<b>Output from Spark RDD</b>: This screenshot shows the Spark output, once the HBase Snapshot has been read in to a Spark RDD.
+<b>Output from Spark RDD</b>: This screenshot shows the Spark output. I read in the HBase Snapshot into Spark, parsed the individual fields, and this is the raw Spark RDD output.
 <img src="screenshots/hbase_spark_output_raw.png" class="inline"/>
 <br>
 <br>
-<b>Filtered Output from Spark</b>: This is a filtered list of records that are more recent (newer) and the user-defined timestamp/threshold value (in this example, keep anything newer than "2016-08-12 11:46:26:800").
+<b>Filtered Output from Spark</b>: This is a filtered list of records that are more recent (newer) than the user-defined timestamp/threshold value (in this example, I'm keeping all records newer than "2016-08-12 11:46:26:800").
 <img src="screenshots/hbase_spark_output.png" class="inline"/>
 <br>
 <br>
