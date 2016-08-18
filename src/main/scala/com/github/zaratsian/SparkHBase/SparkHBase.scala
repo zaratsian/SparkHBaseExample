@@ -35,22 +35,24 @@ object SparkHBase{
 
   def main(args: Array[String]) {
 
-    val sparkConf = new SparkConf().setAppName("testsnap")
+    val props = getProps(args(0))
+
+    val sparkConf = new SparkConf().setAppName(props.getOrElse("spark.appName", "testsnap"))
     val sc = new SparkContext(sparkConf)
 
     println("Creating hbase configuration")
     val conf = HBaseConfiguration.create()
 
-    conf.set("hbase.rootdir", "/apps/hbase/data")
-    conf.set("hbase.zookeeper.quorum", "localhost:2181:/hbase-unsecure")
+    conf.set("hbase.rootdir", props.getOrElse("hbase.rootdir", "/apps/hbase/data"))
+    conf.set("hbase.zookeeper.quorum",  props.getOrElse("hbase.zookeeper.quorum", "localhost:2181:/hbase-unsecure"))
 
     val scan = new Scan 
     conf.set(TableInputFormat.SCAN, convertScanToString(scan))
 
     val job = Job.getInstance(conf)
 
-    val path = new Path("/user/hbase")
-    val snapName = "customer_info_ss"
+    val path = new Path(props.getOrElse("hbase.snapshot.path", "/user/hbase"))
+    val snapName = props.getOrElse("hbase.snapshot.name", "customer_info_ss")
     TableSnapshotInputFormat.setInput(job, snapName, path)
 
     val hBaseRDD = sc.newAPIHadoopRDD(job.getConfiguration, classOf[TableSnapshotInputFormat],
@@ -69,6 +71,7 @@ object SparkHBase{
         "columnFamily=%s,qualifier=%s,timestamp=%s,type=%s,value=%s".format(
           Bytes.toStringBinary(CellUtil.cloneFamily(cell)),
           Bytes.toStringBinary(CellUtil.cloneQualifier(cell)),
+          /*new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").format(new Date(cell.getTimestamp.toLong)),*/
           cell.getTimestamp,
           Type.codeToType(cell.getTypeByte),
           Bytes.toStringBinary(CellUtil.cloneValue(cell))
@@ -77,22 +80,28 @@ object SparkHBase{
     )
 
 
-    zout.collect().foreach(x => println(x))
+
+    /* Output the first 10 records */
+    zout.take(10).foreach(x => println(x))
 
 
 
-   
-val date_string = "2016-08-12 12:59:59:800"
+    /* Set the date threshold (all records that are more recent (newer) than this date will be output */
+    val date_string = "2016-08-12 11:46:26:800"
 
-val dt_num = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss:SSS").parse(date_string).getTime()
+    val dt_num = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").parse(date_string).getTime()
 
-val results = zout.map(x => x.split(',')).filter(x => {var temp = x(2).replace("timestamp=","").toLong; temp>dt_num})
+    val zout_filtered = zout.map(x => x.split(',')).filter(x => {var temp = x(2).replace("timestamp=","").toLong; temp>dt_num})
 
-results.map(cell =>
+    /*
+    zout.map(x => x.split(',')).map(x => {var temp = x(2).replace("timestamp=","").toLong; new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").format(new Date(temp))}).collect().foreach(x => println(x))
+    */
+
+    zout_filtered.map(cell =>
         "%s,%s,%s,%s,%s".format(
           cell(0).toString,
           cell(1).toString,
-          cell(2).toString,
+          new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").format(new Date(cell(2).replace("timestamp=","").toLong)),
           cell(3).toString,
           cell(4).toString
         )
@@ -102,7 +111,6 @@ results.map(cell =>
 
     sc.stop()
 
-    
   }  
 
   def convertScanToString(scan : Scan) = {
@@ -120,6 +128,5 @@ results.map(cell =>
     lines.foreach(x => if (x contains "=") props.put(x.split("=")(0), if (x.split("=").size > 1) x.split("=")(1) else null))
     props
   }
-
 
 }
