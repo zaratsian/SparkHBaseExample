@@ -8,9 +8,9 @@
   <version>0.0.1-SNAPSHOT</version>
 
   <properties>
-    <hdp.version>2.3.4.0-3485</hdp.version>
-    <spark.version>2.0.0</spark.version>
-    <scala.version>2.11</scala.version>
+    <hdp.version>2.4.2.0-258</hdp.version>
+    <spark.version>1.6.0</spark.version>
+    <scala.version>2.10</scala.version>
   </properties>
 
   <repositories>
