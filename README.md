@@ -21,7 +21,7 @@ Currently, there are a few different ways to process HBase Snapshots (using Hive
 <b>Filtered Output from Spark</b>: This is a filtered list of records that are more recent (newer) than the user-defined timestamp/threshold value (in this example, I'm keeping all records newer than "2016-08-12 11:46:26:800").
 <img src="screenshots/hbase_spark_output.png" class="inline"/>
 <br>
-The RDD will be writted to HDFS at /tmp/hbase_data_from_spark.
+NOTE: The filtered data (as an RDD) will be saved to HDFS at /tmp/hbase_data_from_spark.
 <br>
 <br>
 <br><b>Versions:</b>
