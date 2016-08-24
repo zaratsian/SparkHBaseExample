@@ -10,7 +10,7 @@ Currently, there are a few different ways to process HBase Snapshots (using Hive
 <br>Spark: <code>spark-submit --class com.github.zaratsian.SparkHBase.SparkHBase --master yarn-client /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar props</code>
 <br>
 <br>
-<b>HBase Table</b>: This is the sample table that was used for this project. From here, I took a snapshot (hbase shell >> <code>snapshot 'customer_info', 'customer_info_ss'</code>) and sent it into HDFS using this syntax: <code>hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot customer_info_ss -copy-to hdfs://localhost:8020/tmp/ -mappers 1</code>.
+<b>HBase Table</b>: This is the sample table that was used for this project. From here, I took a snapshot (using the hbase shell command <code>snapshot 'customer_info', 'customer_info_ss'</code>) and sent it into HDFS using this syntax: <code>hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot customer_info_ss -copy-to hdfs://localhost:8020/tmp/ -mappers 1</code>.
 <img src="screenshots/hbase_records.png" class="inline"/>
 <br>
 <br>
