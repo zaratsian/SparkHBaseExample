@@ -121,7 +121,7 @@ object SparkHBase{
           cell(4).toString,
           cell(5).toString
         )}
-    ).toDF().show(20, false)
+    ).toDF().show(20,false)
 
     // Save RDD to HDFS
     println("[ *** ] Saving filtered RDD to HDFS")
