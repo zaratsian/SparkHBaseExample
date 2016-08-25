@@ -1,6 +1,6 @@
 <h3>HBase Snapshot to Spark Example</h3>
 
-This project shows how to analyze an HBase Snapshot within Spark. Currently, there are a few different ways to process HBase Snapshots (using Hive, Spark, etc), but many of these methods do not enable granular analysis of timestamps and records at the variable-level. This example demonstrates how to filter an HBase snapshot based on timestamp within Spark, then write the results to RDD.
+This project shows how to analyze an HBase Snapshot within Spark. Currently, there are a few different ways to process HBase Snapshots (using Hive, Spark, etc), but many of these methods do not enable granular analysis of put/update record timestamps at the variable-level. This example demonstrates how to filter an HBase snapshot based on timestamp within Spark, then write the RDD to HDFS.
 <br>
 <br>
 <b>Here's how to run this project:</b>
@@ -24,7 +24,7 @@ This project shows how to analyze an HBase Snapshot within Spark. Currently, the
       b.) Run Spark job: <code>spark-submit --class com.github.zaratsian.SparkHBase.SparkHBase --master yarn-client /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar props</code>
 <br>
 <br>
-      c.) NOTE: Adjust the properties within the props file (if needed) to match your configuration
+      c.) NOTE: Adjust the properties within the props file (if needed) to match your configuration.
 
 <br>
 The Spark job will read the HBase Snapshot, filter records based on a timestamp threshold (which is set in the props file), the write the resulting RDD back to HDFS.
