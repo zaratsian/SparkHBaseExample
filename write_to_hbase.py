@@ -24,7 +24,7 @@ import time, datetime
 # User Inputs (could be moved to arguments)
 hostname            = 'localhost'
 port                = 9999
-table_name          = 'customer_table'
+table_name          = 'customer_info'
 columnfamily        = 'demographics'
 number_of_records   = 1000000
 batch_size          = 2000
