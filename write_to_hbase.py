@@ -31,9 +31,13 @@ batch_size          = 2000
 
 
 print '[ INFO ] Trying to connect to the HBase Thrift server at ' + str(hostname) + ':' + str(port)
-connection = happybase.Connection(hostname, port=port, timeout=10000)
-table = connection.table(table_name)
-print '[ INFO ] Successfully connected to the HBase Thrift server at ' + str(hostname) + ':' + str(port)
+try:
+    connection = happybase.Connection(hostname, port=port, timeout=40000)
+    table = connection.table(table_name)
+    print '[ INFO ] Successfully connected to the HBase Thrift server at ' + str(hostname) + ':' + str(port)
+except:
+    print '[ ERROR ] Could not connect to HBase Thrift Server at ' + str(hostname) + ':' + str(port) + '. Make sure that the HBase Thrift server is running and the host and port number is correct.'
+    sys.exit()
 
 
 # https://happybase.readthedocs.io/en/latest/api.html#happybase.Connection.create_table
@@ -47,7 +51,7 @@ connection.create_table(table_name,families)
 print '[ INFO ] Successfully created HBase table:  ' + str(table_name)
 
 
-print '[ INFO ] Inserting ' + str(number_of_records) + ' into ' + str(table_name)
+print '[ INFO ] Inserting ' + str(number_of_records) + ' records into ' + str(table_name)
 start_time = datetime.datetime.now()
 with table.batch(batch_size=batch_size) as b:
     for i in range(number_of_records):
@@ -62,7 +66,7 @@ with table.batch(batch_size=batch_size) as b:
                           b'demographics:age': str(age),
                           b'demographics:level': str(level)})
 
-print '[ INFO ] Successfully inserted ' + str(number_of_records) + ' into ' + str(table_name) + ' in ' + str((datetime.datetime.now() - start_time).seconds) + ' seconds'
+print '[ INFO ] Successfully inserted ' + str(number_of_records) + ' records into ' + str(table_name) + ' in ' + str((datetime.datetime.now() - start_time).seconds) + ' seconds'
 
 
 print '[ INFO ] Printing data records from the generated HBase table'
