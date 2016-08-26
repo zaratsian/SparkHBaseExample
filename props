@@ -1,4 +1,4 @@
-hbase.rootdir=/apps/hbase/data
+hbase.rootdir=/tmp
 hbase.zookeeper.quorum=localhost:2181:/hbase-unsecure
 hbase.snapshot.name=customer_info_ss
 hbase.snapshot.path=/user/hbase
