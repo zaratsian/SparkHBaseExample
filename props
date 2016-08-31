@@ -5,4 +5,4 @@ hbase.snapshot.path=/user/hbase
 
 spark.appname=testsnap
 
-filter_date=2016-08-12 11:46:26:800
+datetime_threshold=2016-08-25 14:27:55:001
