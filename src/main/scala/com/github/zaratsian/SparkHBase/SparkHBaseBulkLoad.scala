@@ -1,10 +1,8 @@
 
 /******************************************************************************************
 This code:
-  1) Reads an HBase Snapshot into a Spark Dataframe
-  2) Parses the records
-  3) Processes/Filters the data (additional analytics can be done on the records as well)
-  4) Writes the results (as DataFrame) to HDFS
+  1) Creates empty HBase Table
+  2) Picks up data from HDFS and Bulk Loads it into the newly created HBase table
 ******************************************************************************************/  
 
 package com.github.zaratsian.SparkHBase;
