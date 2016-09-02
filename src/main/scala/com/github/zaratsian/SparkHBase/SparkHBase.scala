@@ -194,7 +194,7 @@ object SparkHBase{
 
     //Bulk load Hfiles to Hbase
     //val bulkLoader = new LoadIncrementalHFiles(conf)
-    //bulkLoader.doBulkLoad(new Path("/tmp/xxxx19"), table)
+    //bulkLoader.doBulkLoad(new Path("/tmp/hbase_from_spark"), table)
 
 
     sc.stop()
