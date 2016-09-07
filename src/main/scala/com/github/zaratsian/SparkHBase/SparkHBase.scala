@@ -92,8 +92,8 @@ object SparkHBase{
     val keyValue = hBaseRDD.map(x => x._2).map(_.list)
 
     println("[ *** ] Printing raw SnapShot (10 records) from HBase SnapShot")         
-    //hBaseRDD.map(x => x._1.toString).take(10).foreach(x => println(x))
-    //hBaseRDD.map(x => x._2.toString).take(10).foreach(x => println(x))
+    hBaseRDD.map(x => x._1.toString).take(10).foreach(x => println(x))
+    hBaseRDD.map(x => x._2.toString).take(10).foreach(x => println(x))
     keyValue.map(x => x.toString).take(10).foreach(x => println(x))
 
     val zout = keyValue.flatMap(x =>  x.asScala.map(cell =>
@@ -113,11 +113,13 @@ object SparkHBase{
     zout.show(10, false)
     //zout.take(10).foreach(x => println(x))
 
-    val datetime_threshold      = props.getOrElse("datetime_threshold", "2016-08-12 11:46:00:001")
+    val datetime_threshold      = props.getOrElse("datetime_threshold", "2016-08-25 14:27:02:001")
     val datetime_threshold_long = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").parse(datetime_threshold).getTime()
     println("[ *** ] Filtering/Keeping all SnapShot records that are more recent (greater) than the datetime_threshold (set in the props file): " + datetime_threshold.toString)
     
+    // Either Filter as DataFrame or...
     val zout_filtered  = zout.filter($"colDatetime" >= datetime_threshold_long)
+    // ...Filter as RDD (I am currently using RDDs, but would like to change this to DataFrames)
     val zout_filtered2 = keyValue.flatMap(x => x.asScala.map(cell =>
           {(
             Bytes.toStringBinary(CellUtil.cloneRow(cell)),
@@ -128,14 +130,14 @@ object SparkHBase{
             Type.codeToType(cell.getTypeByte).toString,
             Bytes.toStringBinary(CellUtil.cloneValue(cell))
           )}
-       ))
+       )).filter(x => x._4>=datetime_threshold_long)
 
-    println("[ *** ] Data has been filtered down to " + zout_filtered.count() + " records out of " + record_count_raw)
+    println("[ *** ] Data has been filtered down to " + zout_filtered2.count() + " records out of " + record_count_raw)
     println("[ *** ] Printing filtered HBase SnapShot records (10 records)")
     zout_filtered.show(10, false)
 
     /*
-    zout_filtered2
+    Snipped from zout_filtered2 RDD:
     (496832,demographics,age,1472159181696,2016-08-25 14:06:21:696,Put,100)
     (496832,demographics,custid,1472159181696,2016-08-25 14:06:21:696,Put,3025161)
     (496832,demographics,gender,1472159181696,2016-08-25 14:06:21:696,Put,male)
@@ -143,58 +145,23 @@ object SparkHBase{
     (4968320,demographics,age,1472160474783,2016-08-25 14:27:54:783,Put,67)
     */
     
+    // Convert RDD to KeyValue
     val rdd_to_hbase = zout_filtered2.map(x=>{
       val kv: KeyValue = new KeyValue(Bytes.toBytes(x._1), x._2.getBytes(), x._3.getBytes(), x._7.getBytes() )
         (new ImmutableBytesWritable(Bytes.toBytes(x._1)), kv)
       })
 
+    println("[ *** ] Printing rdd_to_hbase (10 records of keyvalue)...")
+    rdd_to_hbase.map(x => x._2.toString).take(10).foreach(x => println(x))
 
-/* 
-    //Create Hbase Table
-
-    val tableName = "zcreate_hbasetable"
-
-    val conf = HBaseConfiguration.create()
-    conf.set("zookeeper.znode.parent", "/hbase-unsecure")
-    conf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
-    //conf.set(TableInputFormat.INPUT_TABLE, tableName)
-
-    //val job2 = Job.getInstance(conf)
-    val job2 = new Job (conf, "DumpHFile")
-
-    job2.setMapOutputKeyClass (classOf[ImmutableBytesWritable])
-    job2.setMapOutputValueClass (classOf[KeyValue])
-    val table = new HTable(conf, tableName)
-    HFileOutputFormat.configureIncrementalLoad (job2, table)
-
-    val admin = new HBaseAdmin(conf)
-    if(!admin.isTableAvailable(tableName)) {
-      println("[ ***] Creating HBase Table")
-      val tableDesc = new HTableDescriptor(tableName)
-      tableDesc.addFamily(new HColumnDescriptor("demographics".getBytes()));
-      admin.createTable(tableDesc)
-    }else{
-      print("[ *** ] Table already exists!!")
-      val columnDesc = new HColumnDescriptor("demographics");
-	  admin.disableTable(Bytes.toBytes(tableName));
-      admin.addColumn(tableName, columnDesc);
-	  admin.enableTable(Bytes.toBytes(tableName));
-    }
-*/
-
-
+    // Configure HBase output settings
     val tableName = "zhbasetable"
-
     val conf = HBaseConfiguration.create()
     conf.set("zookeeper.znode.parent", "/hbase-unsecure")
     conf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
 
     println("[ *** ] Saving HFiles / Results to HDFS")
     rdd_to_hbase.saveAsNewAPIHadoopFile("/tmp/hbase_from_spark", classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], conf)
-
-    //Bulk load Hfiles to Hbase
-    //val bulkLoader = new LoadIncrementalHFiles(conf)
-    //bulkLoader.doBulkLoad(new Path("/tmp/hbase_from_spark"), table)
 
 
     sc.stop()
