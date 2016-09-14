@@ -104,7 +104,8 @@ object SparkHBaseBulkLoad{
 
 
 
-    // Generate 10 sample data:
+    // For Testing Purposes - Generate 10 records
+    // Replace this section with and RDD map (even better if dataframe)
     val rdd = sc.parallelize(1 to 10)
 
     println("[ *** ] Printing first 5 records of Spark RDD containing the HBase KeyValue")
