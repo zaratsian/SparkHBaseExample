@@ -1,8 +1,10 @@
 
 /******************************************************************************************
 This code:
-  1) Creates empty HBase Table
-  2) Picks up data from HDFS and Bulk Loads it into the newly created HBase table
+  1) Reads an HBase Snapshot into a Spark Dataframe
+  2) Parses the records
+  3) Processes/Filters the data (additional analytics can be done on the records as well)
+  4) Writes the results (as DataFrame) to HDFS
 ******************************************************************************************/  
 
 package com.github.zaratsian.SparkHBase;
@@ -57,7 +59,7 @@ object SparkHBaseBulkLoad{
     
     val props = getProps(args(0))
     
-    val sparkConf = new SparkConf().setAppName(props.getOrElse("spark.appName", "testsnap"))
+    val sparkConf = new SparkConf().setAppName(props.getOrElse("spark.appName", "sparkhbasebulkload"))
     val sc = new SparkContext(sparkConf)
 
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
@@ -69,7 +71,7 @@ object SparkHBaseBulkLoad{
     //hConf.set("hbase.zookeeper.quorum",  props.getOrElse("hbase.zookeeper.quorum", "localhost:2181:/hbase-unsecure"))
 
     // Setup HBase Configuation
-    val tableName = "zcreate_hbasetable"
+    val tableName = "sparkhbasebulkload"
 
     hConf.set("zookeeper.znode.parent", "/hbase-unsecure")
     //hConf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
@@ -88,19 +90,45 @@ object SparkHBaseBulkLoad{
     if(!admin.isTableAvailable(tableName)) {
       println("[ ***] Creating HBase Table")
       val tableDesc = new HTableDescriptor(tableName)
-      tableDesc.addFamily(new HColumnDescriptor("demographics".getBytes()));
+      tableDesc.addFamily(new HColumnDescriptor("cf".getBytes()));
       admin.createTable(tableDesc)
     }else{
       print("[ *** ] Table already exists!!")
-      val columnDesc = new HColumnDescriptor("demographics");
+      val columnDesc = new HColumnDescriptor("cf");
 	  admin.disableTable(Bytes.toBytes(tableName));
       admin.addColumn(tableName, columnDesc);
 	  admin.enableTable(Bytes.toBytes(tableName));
     }
 
+
+
+
+
+    // Generate 10 sample data:
+    val rdd = sc.parallelize(1 to 10)
+
+    println("[ *** ] Printing first 5 records of Spark RDD containing the HBase KeyValue")
+    rdd.take(5).foreach(x => println((x, (x, "cf","c1","value_xxx"))))
+
+    val rdd_out = rdd.map(x=>{
+        val kv: KeyValue = new KeyValue(Bytes.toBytes(x), "cf".getBytes(), "c1".getBytes(), "value_xxx".getBytes() )
+        (new ImmutableBytesWritable(Bytes.toBytes(x)), kv)
+    })
+    
+    println("[ *** ] Saving HFiles to HDFS") 
+    rdd_out.saveAsNewAPIHadoopFile("/tmp/sparkhbasebulkload", classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf)
+    
+
+
+
+
+
+
+
+
     //Bulk load Hfiles to Hbase
     val bulkLoader = new LoadIncrementalHFiles(hConf)
-    bulkLoader.doBulkLoad(new Path("/tmp/hbase_from_spark"), table)
+    bulkLoader.doBulkLoad(new Path("/tmp/sparkhbasebulkload"), table)
 
 
     sc.stop()
