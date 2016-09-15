@@ -153,21 +153,29 @@ object SparkReadHBaseSnapshot{
     rdd_to_hbase.map(x => x._2.toString).take(10).foreach(x => println(x))
 */
 
+    // Converting dataframe to RDD to that it can be written as HFileOutputFormat using saveAsNewAPIHadoopFile
+    val rdd_from_df = df_filtered.rdd.map(x => {
+        val kv: KeyValue = new KeyValue(Bytes.toBytes(x(0).toString), x(1).toString.getBytes(), x(2).toString.getBytes(), x(6).toString.getBytes() )
+        (new ImmutableBytesWritable(Bytes.toBytes(x(0).toString)), kv)
+    })
+
     // Configure HBase output settings
     val hTableName = "sparkhbasebulkload"
     val hConf2 = HBaseConfiguration.create()
     hConf2.set("zookeeper.znode.parent", "/hbase-unsecure")
     hConf2.set(TableOutputFormat.OUTPUT_TABLE, hTableName)
 
-    println("[ *** ] Saving results to HDFS ( /tmp/" + hTableName + " ) in HBase KeyValue HFileOutputFormat. This makes it easy to BulkLoad into HBase from this HDFS Files (see SparkHBaseBulkLoad.scala for bulkload code)") 
+    println("[ *** ] Saving results to HDFS (/tmp/" + hTableName + ") as HBase KeyValue HFileOutputFormat. This makes it easy to BulkLoad into HBase (see SparkHBaseBulkLoad.scala for bulkload code)") 
+
+    println("[ *** ] Saving RDD (Count = " + rdd_from_df.count() + ")") 
+    rdd_from_df.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
+    //rdd_to_hbase.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
+   
 /*
-    println("[ *** ] Saving RDD (Count = " + rdd_to_hbase.count() + ")") 
-    rdd_to_hbase.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
-*/
     println("[ *** ] Saving DF  (Count = " + df_filtered.count()  + ")")
     //rdd_to_hbase.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
     df_filtered.save("/tmp/sparkhbase_df")
-
+*/
 
     sc.stop()
 
