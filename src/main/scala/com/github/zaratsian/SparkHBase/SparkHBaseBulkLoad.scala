@@ -1,11 +1,9 @@
 
-/******************************************************************************************
-This code:
-  1) Reads an HBase Snapshot into a Spark Dataframe
-  2) Parses the records
-  3) Processes/Filters the data (additional analytics can be done on the records as well)
-  4) Writes the results (as DataFrame) to HDFS
-******************************************************************************************/  
+/*******************************************************************************************************
+This code does the following:
+  1) Creates HBase table (if it does not already exist) 
+  2) Uses LoadIncrementalHFiles to BulkLoad from HDFS to HBase Table 
+********************************************************************************************************/  
 
 package com.github.zaratsian.SparkHBase;
 
@@ -59,77 +57,60 @@ object SparkHBaseBulkLoad{
     
     val props = getProps(args(0))
     
-    val sparkConf = new SparkConf().setAppName(props.getOrElse("spark.appName", "sparkhbasebulkload"))
+    val sparkConf = new SparkConf().setAppName("SparkHBaseBulkLoad")
     val sc = new SparkContext(sparkConf)
 
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     import sqlContext.implicits._
-
+ 
+    // HBase table name (if it does not exist, it will be created) 
+    val hTableName   = "sparkhbasebulkload"
+    val columnFamily = "demographics" 
+    
     println("[ *** ] Creating HBase Configuration")
     val hConf = HBaseConfiguration.create()
-    //hConf.set("hbase.rootdir", props.getOrElse("hbase.rootdir", "/apps/hbase/data"))
-    //hConf.set("hbase.zookeeper.quorum",  props.getOrElse("hbase.zookeeper.quorum", "localhost:2181:/hbase-unsecure"))
-
-    // Setup HBase Configuation
-    val tableName = "sparkhbasebulkload"
-
     hConf.set("zookeeper.znode.parent", "/hbase-unsecure")
-    //hConf.set(TableOutputFormat.OUTPUT_TABLE, tableName)
-    hConf.set(TableInputFormat.INPUT_TABLE, tableName)
+    hConf.set(TableInputFormat.INPUT_TABLE, hTableName)
 
-    //val job = Job.getInstance(conf)
-    val job = new Job (hConf, "DumpHFile")
-
-    job.setMapOutputKeyClass (classOf[ImmutableBytesWritable])
-    job.setMapOutputValueClass (classOf[KeyValue])
-    val table = new HTable(hConf, tableName)
-    //HFileOutputFormat.configureIncrementalLoad (job, table)
+    //val job = new Job (hConf, "DumpHFile")
+    //job.setMapOutputKeyClass (classOf[ImmutableBytesWritable])
+    //job.setMapOutputValueClass (classOf[KeyValue])
+    
+    val table = new HTable(hConf, hTableName)
 
     // Create HBase Table
     val admin = new HBaseAdmin(hConf)
-    if(!admin.isTableAvailable(tableName)) {
-      println("[ ***] Creating HBase Table")
-      val tableDesc = new HTableDescriptor(tableName)
-      tableDesc.addFamily(new HColumnDescriptor("cf".getBytes()));
-      admin.createTable(tableDesc)
+    if(!admin.isTableAvailable(hTableName)) {
+        println("[ ***] Creating HBase Table ( " + hTableName + " )")
+        val hTableDesc = new HTableDescriptor(hTableName)
+        hTableDesc.addFamily(new HColumnDescriptor(columnFamily.getBytes()))
+        admin.createTable(hTableDesc)
     }else{
-      print("[ *** ] Table already exists!!")
-      val columnDesc = new HColumnDescriptor("cf");
-	  admin.disableTable(Bytes.toBytes(tableName));
-      admin.addColumn(tableName, columnDesc);
-	  admin.enableTable(Bytes.toBytes(tableName));
+        print("[ *** ] HBase Table ( " + hTableName + " ) already exists!!")
+        val columnDesc = new HColumnDescriptor(columnFamily.getBytes())
+	admin.disableTable(Bytes.toBytes(hTableName))
+        admin.addColumn(hTableName, columnDesc)
+	admin.enableTable(Bytes.toBytes(hTableName))
     }
 
-
-
-
-
-    // For Testing Purposes - Generate 10 records
-    // Replace this section with and RDD map (even better if dataframe)
+/*  Uncomment this for testing purposes
+    // Generating Test Data
+    println("[ *** ] Generating Test Data as an RDD")
     val rdd = sc.parallelize(1 to 10)
 
-    println("[ *** ] Printing first 5 records of Spark RDD containing the HBase KeyValue")
+    println("[ *** ] Printing first 5 records of Spark RDD containing the HBase KeyValue structure")
     rdd.take(5).foreach(x => println((x, (x, "cf","c1","value_xxx"))))
 
-    val rdd_out = rdd.map(x=>{
-        val kv: KeyValue = new KeyValue(Bytes.toBytes(x), "cf".getBytes(), "c1".getBytes(), "value_xxx".getBytes() )
+    val rdd_out = rdd.map(x => {
+        val kv: KeyValue = new KeyValue(Bytes.toBytes(x), columnFamily.getBytes(), "c1".getBytes(), "value_xxx".getBytes() )
         (new ImmutableBytesWritable(Bytes.toBytes(x)), kv)
     })
-    
-    println("[ *** ] Saving HFiles to HDFS") 
-    rdd_out.saveAsNewAPIHadoopFile("/tmp/sparkhbasebulkload", classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf)
-    
+*/
 
 
-
-
-
-
-
-
-    //Bulk load Hfiles to Hbase
+    println("[ *** ] BulkLoading from HDFS (HFileOutputFormat) to HBase Table (" + hTableName  + ")")
     val bulkLoader = new LoadIncrementalHFiles(hConf)
-    bulkLoader.doBulkLoad(new Path("/tmp/sparkhbasebulkload"), table)
+    bulkLoader.doBulkLoad(new Path("/tmp/" + hTableName), table)
 
 
     sc.stop()
@@ -143,12 +124,6 @@ object SparkHBaseBulkLoad{
   }  
 
 
-  def convertScanToString(scan : Scan) = {
-      val proto = ProtobufUtil.toScan(scan);
-      Base64.encodeBytes(proto.toByteArray());
-  }
-
-
   def getArrayProp(props: => HashMap[String,String], prop: => String): Array[String] = {
     return props.getOrElse(prop, "").split(",").filter(x => !x.equals(""))
   }
@@ -159,20 +134,6 @@ object SparkHBaseBulkLoad{
     val lines = fromFile(file).getLines
     lines.foreach(x => if (x contains "=") props.put(x.split("=")(0), if (x.split("=").size > 1) x.split("=")(1) else null))
     props
-  }
-
-
-  def convertToPut(cell: Array[String]): (ImmutableBytesWritable, Put) = {
-    var out_rowid  = cell(0).toString;
-    var out_family = cell(1).toString;
-    var out_column = cell(2).toString;
-    var out_timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").format(new Date(cell(3).toLong));
-    var out_value = cell(5).toString;
-    
-    var puttohbase = new Put(new String(out_rowid).getBytes());
-        puttohbase.add("tableinfo".getBytes(), out_column.getBytes(), new String(out_value).getBytes())
-    
-    return (new ImmutableBytesWritable(Bytes.toBytes(out_rowid)), puttohbase)
   }
 
 }
