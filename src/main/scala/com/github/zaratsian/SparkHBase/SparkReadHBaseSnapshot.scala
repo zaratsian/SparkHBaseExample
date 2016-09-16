@@ -63,7 +63,6 @@ object SparkReadHBaseSnapshot{
     
     val sparkConf = new SparkConf().setAppName("SparkReadHBaseSnapshot")
     val sc = new SparkContext(sparkConf)
-
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
     import sqlContext.implicits._
 
@@ -91,10 +90,10 @@ object SparkReadHBaseSnapshot{
     // Extract the KeyValue element of the tuple
     val keyValue = hBaseRDD.map(x => x._2).map(_.list)
 
-    println("[ *** ] Printing raw SnapShot (10 records) from HBase SnapShot")         
+    //println("[ *** ] Printing raw SnapShot (10 records) from HBase SnapShot")         
     //hBaseRDD.map(x => x._1.toString).take(10).foreach(x => println(x))
     //hBaseRDD.map(x => x._2.toString).take(10).foreach(x => println(x))
-    keyValue.map(x => x.toString).take(10).foreach(x => println(x))
+    //keyValue.map(x => x.toString).take(10).foreach(x => println(x))
 
     val df = keyValue.flatMap(x =>  x.asScala.map(cell =>
         hVar(
@@ -119,6 +118,7 @@ object SparkReadHBaseSnapshot{
     
     // Filter Dataframe...
     val df_filtered = df.filter($"colDatetime" >= datetime_threshold_long)
+    
     // ...or Filter RDD
 /*
     val rdd_filtered = keyValue.flatMap(x => x.asScala.map(cell =>
@@ -135,12 +135,9 @@ object SparkReadHBaseSnapshot{
 */
 
     println("[ *** ] Filtered dataframe contains " + df_filtered.count() + " records")
-    println("[ *** ] Printing filtered HBase SnapShot records (10 records)")
-    df_filtered.show(10, false)
+    //println("[ *** ] Printing filtered HBase SnapShot records (10 records)")
+    //df_filtered.show(10, false)
     //rdd_filtered.take(10).foreach(x => println(x))
-
-    val time_snapshot_processing = Calendar.getInstance()
-    println("[ *** ] Runtime for Snapshot Processing/Filtering: " + ((time_snapshot_processing.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")
 
 /*
     // Convert RDD to KeyValue
@@ -153,11 +150,13 @@ object SparkReadHBaseSnapshot{
     rdd_to_hbase.map(x => x._2.toString).take(10).foreach(x => println(x))
 */
 
-    // Converting dataframe to RDD to that it can be written as HFileOutputFormat using saveAsNewAPIHadoopFile
+    // Converting dataframe to RDD so that it can be written as HFileOutputFormat using saveAsNewAPIHadoopFile
     val rdd_from_df = df_filtered.rdd.map(x => {
-        val kv: KeyValue = new KeyValue(Bytes.toBytes(x(0).toString), x(1).toString.getBytes(), x(2).toString.getBytes(), x(6).toString.getBytes() )
+        val kv: KeyValue = new KeyValue(Bytes.toBytes(x(0).toString), x(1).toString.getBytes(), x(2).toString.getBytes(), x(3).asInstanceOf[Long], x(6).toString.getBytes() )
         (new ImmutableBytesWritable(Bytes.toBytes(x(0).toString)), kv)
     })
+
+    val time_snapshot_processing = Calendar.getInstance()
 
     // Configure HBase output settings
     val hTableName = "sparkhbasebulkload"
@@ -165,17 +164,17 @@ object SparkReadHBaseSnapshot{
     hConf2.set("zookeeper.znode.parent", "/hbase-unsecure")
     hConf2.set(TableOutputFormat.OUTPUT_TABLE, hTableName)
 
-    println("[ *** ] Saving results to HDFS (/tmp/" + hTableName + ") as HBase KeyValue HFileOutputFormat. This makes it easy to BulkLoad into HBase (see SparkHBaseBulkLoad.scala for bulkload code)") 
-
-    println("[ *** ] Saving RDD (Count = " + rdd_from_df.count() + ")") 
+    println("[ *** ] Saving results to HDFS as HBase KeyValue HFileOutputFormat. This makes it easy to BulkLoad into HBase (see SparkHBaseBulkLoad.scala for bulkload code)") 
+    rdd_from_df.map(x => x._2.toString).take(10).foreach(x => println(x))
     rdd_from_df.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
-    //rdd_to_hbase.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
-   
+    println("[ *** ] Saved " + rdd_from_df.count() + " records to HDFS, located in /tmp/" + hTableName)   
+
 /*
     println("[ *** ] Saving DF  (Count = " + df_filtered.count()  + ")")
     //rdd_to_hbase.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
     df_filtered.save("/tmp/sparkhbase_df")
 */
+
 
     sc.stop()
 
@@ -183,7 +182,8 @@ object SparkReadHBaseSnapshot{
     // Print Total Runtime
     val end_time = Calendar.getInstance()
     println("[ *** ] End Time: " + end_time.getTime().toString)
-    println("[ *** ] Total Runtime for processing and writing to HDFS: " + ((end_time.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")   
+    println("[ *** ] Runtime for Snapshot Processing:                 " + ((time_snapshot_processing.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")
+    println("[ *** ] Runtime for Snapshot Processing, saving to HDFS: " + ((end_time.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")   
 
   }  
 
