@@ -1,8 +1,10 @@
-hbase.rootdir=/tmp
+hbase.rootdir=/apps/hbase/data
 hbase.zookeeper.quorum=localhost:2181:/hbase-unsecure
-hbase.snapshot.name=customer_info_ss
+hbase.snapshot.name=hbase_simulated_table_ss
 hbase.snapshot.path=/user/hbase
 
-spark.appname=testsnap
+spark.appname=SparkReadHBaseSnapshot
 
 datetime_threshold=2016-08-25 14:27:55:001
+
+number_of_simulated_records=50000000
