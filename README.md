@@ -28,7 +28,7 @@ The main motivation for writing this code is to reduce the impact on the HBase R
   <br>```hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot hbase_simulated_1m_ss -copy-to /tmp/ -mappers 2```
 <br>
 <br>
-  4. Run the included Spark (scala) <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SparkReadHBaseSnapshot.scala">code</a> against the HBase Snapshot. This code will read the HBase snapshot, process records, and output the data in an HBase (HFile/KeyValue) format.
+  4. Run the included Spark (scala) <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SparkReadHBaseSnapshot.scala">code</a> against the HBase Snapshot. This code will read the HBase snapshot, filter records based on rowkey range (80001 to 90000) and based on a timestamp threshold (which is set in the props file), then write the results back to HDFS in HBase format (HFiles/KeyValue).
 <br>
 <br>
       a.) Build project: ```mvn clean package```
@@ -40,7 +40,13 @@ The main motivation for writing this code is to reduce the impact on the HBase R
       c.) NOTE: Adjust the properties within the props file (if needed) to match your configuration.
 
 <br>
-The Spark job will read the HBase Snapshot, filter records based on rowkey range (80001 to 90000) and based on a timestamp threshold (which is set in the props file), then write the results back to HDFS in HBase format (HFiles/KeyValue).
+<br><b>Preliminary Performance Metrics:</b>
+<br>
+| Number of Records | Spark Runtime (without write to HDFS) | Spark Runtime (with write to HDFS) |
+|:----------------- |:------------------------------------- |:---------------------------------- |
+| 1,000,000         | 27.07 seconds                         | 36.05 seconds                      |
+| 50,000,000        | 417.38 seconds                        | 764.801 seconds                    |
+| 100,000,000       | 741.829 seconds                       | 1413.001 seconds                   |
 <br>
 <br>
 <b>Sample output of HBase simulated data structure (using SimulateAndBulkLoadHBaseData.scala):</b>
