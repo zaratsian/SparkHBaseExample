@@ -122,7 +122,7 @@ object SparkReadHBaseSnapshot{
     println("[ *** ] Filtering/Keeping all SnapShot records that are more recent (greater) than the datetime_threshold (set in the props file): " + datetime_threshold.toString)
     
     println("[ *** ] Filtering Dataframe")
-    val df_filtered = df.filter($"colDatetime" >= datetime_threshold_long)
+    val df_filtered = df.filter($"colDatetime" >= datetime_threshold_long && $"rowkey".between(80001, 90000))
 
 /*  // Filter RDD (alternative, but using a DF is a better option)
     val rdd_filtered = keyValue.flatMap(x => x.asScala.map(cell =>
@@ -168,21 +168,22 @@ object SparkReadHBaseSnapshot{
     hConf2.set("zookeeper.znode.parent", "/hbase-unsecure")
     hConf2.set(TableOutputFormat.OUTPUT_TABLE, hTableName)
 
-    println("[ *** ] Saving results to HDFS as HBase KeyValue HFileOutputFormat. This makes it easy to BulkLoad into HBase (see SparkHBaseBulkLoad.scala for bulkload code)") 
+    //println("[ *** ] Saving results to HDFS as HBase KeyValue HFileOutputFormat. This makes it easy to BulkLoad into HBase (see SparkHBaseBulkLoad.scala for bulkload code)") 
     //rdd_from_df.map(x => x._2.toString).take(10).foreach(x => println(x))
     rdd_from_df.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
-    println("[ *** ] Saved " + rdd_from_df.count() + " records to HDFS, located in /tmp/" + hTableName)   
 
-
-    sc.stop()
 
 
     // Print Total Runtime
     val end_time = Calendar.getInstance()
     println("[ *** ] End Time: " + end_time.getTime().toString)
-    println("[ *** ] Saved " + rdd_from_df.count() + " records to HDFS, located in /tmp/" + hTableName)
+    println("[ *** ] Saved " + rdd_from_df.count() + " records to HDFS, located in /tmp/" + hTableName.toString)
     println("[ *** ] Runtime for Snapshot Processing:                 " + ((time_snapshot_processing.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")
     println("[ *** ] Runtime for Snapshot Processing, saving to HDFS: " + ((end_time.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")   
+
+
+    sc.stop()
+
 
   }  
 
