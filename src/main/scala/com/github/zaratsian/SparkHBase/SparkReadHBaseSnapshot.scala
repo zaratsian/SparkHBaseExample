@@ -3,7 +3,7 @@
 This code does the following:
   1) Read an HBase Snapshot, and convert to Spark RDD (snapshot name is defined in props file)
   2) Parse the records / KeyValue (extracting column family, column name, timestamp, value, etc)
-  3) Perform general data processing - Filter the data based on timestamp (timestamp threshold variable defined in props file)
+  3) Perform general data processing - Filter the data based on rowkey range AND timestamp (timestamp threshold variable defined in props file)
   4) Write the results to HDFS (formatted for HBase BulkLoad, saved as HFileOutputFormat)
 
 Usage:
