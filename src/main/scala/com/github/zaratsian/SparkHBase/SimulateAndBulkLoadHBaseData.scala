@@ -2,11 +2,12 @@
 /*******************************************************************************************************
 
 This code:
-  1) Simulates X number of HBase records
-  2) Bulkloads the data into HBase
+  1) Simulates X number of HBase records (number of simulated records can be defined in props file)
+  2) Bulkloads the data into HBase (table name can be defined in props file)
 
 Usage:
-  
+
+spark-submit --class com.github.zaratsian.SparkHBase.SimulateAndBulkLoadHBaseData --jars /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar /usr/hdp/current/phoenix-client/phoenix-client.jar /tmp/props  
  
 ********************************************************************************************************/  
 
@@ -38,6 +39,7 @@ import org.apache.hadoop.hbase.KeyValue
 import org.apache.hadoop.hbase.mapred.TableOutputFormat
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles
+import org.apache.hadoop.hbase.mapreduce.KeyValueSortReducer
 
 import org.apache.hadoop.mapred.JobConf
 import org.apache.hadoop.mapreduce.Job
@@ -62,7 +64,7 @@ object SimulateAndBulkLoadHBaseData{
     println("[ *** ] Start Time: " + start_time.getTime().toString)
     
     val props = getProps(args(0))
-    val number_of_simulated_records = props.getOrElse("number_of_simulated_records", "1000").toInt 
+    val number_of_simulated_records = props.getOrElse("simulated_records", "1000").toInt 
 
     val sparkConf = new SparkConf().setAppName("SimulatedHBaseTable")
     val sc = new SparkContext(sparkConf)
@@ -71,7 +73,7 @@ object SimulateAndBulkLoadHBaseData{
     import sqlContext.implicits._
  
     // HBase table name (if it does not exist, it will be created) 
-    val hTableName   = "hbase_simulated_table"
+    val hTableName   = props.getOrElse("simulated_tablename", "hbase_simulated_table")
     val columnFamily = "cf"
     
     println("[ *** ] Creating HBase Configuration")
@@ -85,11 +87,6 @@ object SimulateAndBulkLoadHBaseData{
     val admin = new HBaseAdmin(hConf)
     
     if(!admin.isTableAvailable(hTableName)) {
-        println("[ ***] Creating HBase Table (" + hTableName + ")")
-
-        val hTableDesc = new HTableDescriptor(hTableName)
-        hTableDesc.addFamily(new HColumnDescriptor(columnFamily.getBytes()))
-        admin.createTable(hTableDesc)
 
         println("[ *** ] Simulating Data")
         val rdd = sc.parallelize(1 to number_of_simulated_records)
@@ -97,16 +94,24 @@ object SimulateAndBulkLoadHBaseData{
         // Setup Random Generator
         //val rand = scala.util.Random
 
-        val rdd_out = rdd.map(x => {
-            
-            val kv: KeyValue = new KeyValue(Bytes.toBytes(x), columnFamily.getBytes(), "c1".getBytes(), Bytes.toBytes(x) ) 
-            (new ImmutableBytesWritable(Bytes.toBytes(x)), kv)
+        println("[ *** ] Creating KeyValues")
+        val rdd_out = rdd.map(x => {            
+            val kv: KeyValue = new KeyValue( Bytes.toBytes(x), columnFamily.getBytes(), "c1".getBytes(), x.toString.getBytes() ) 
+            (new ImmutableBytesWritable( Bytes.toBytes(x) ), kv)
         })
 
+        println("[ *** ] Printing simulated data (10 records)")
+        rdd_out.map(x => x._2.toString).take(10).foreach(x => println(x))
+
+        println("[ ***] Creating HBase Table (" + hTableName + ")")
+        val hTableDesc = new HTableDescriptor(hTableName)
+        hTableDesc.addFamily(new HColumnDescriptor(columnFamily.getBytes()))
+        admin.createTable(hTableDesc)
+
+        println("[ *** ] Saving data to HDFS as KeyValue/HFileOutputFormat (table name = " + hTableName + ")")
         val hConf2 = HBaseConfiguration.create()
         hConf2.set("zookeeper.znode.parent", "/hbase-unsecure")
         hConf2.set(TableOutputFormat.OUTPUT_TABLE, hTableName)
-
         rdd_out.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
 
         println("[ *** ] BulkLoading from HDFS (HFileOutputFormat) to HBase Table (" + hTableName  + ")")
@@ -124,7 +129,7 @@ object SimulateAndBulkLoadHBaseData{
 
     // Print Runtime Metric
     val end_time = Calendar.getInstance()
-    println("[ *** ] End Time: " + end_time.getTime().toString)
+    println("[ *** ] Created a table (" + hTableName + ") with " + number_of_simulated_records.toString + " records within HDFS and also bulkloaded it into HBase")
     println("[ *** ] Total Runtime: " + ((end_time.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")   
 
   }  
