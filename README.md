@@ -1,42 +1,53 @@
 <h3>HBase Snapshot to Spark Example</h3>
 
-This project shows how to analyze an HBase Snapshot within Spark. Currently, there are a few different ways to process HBase Snapshots (using Hive, Spark, etc), but many of these methods do not enable granular analysis of put/update record timestamps at the variable-level. This example demonstrates how to filter an HBase snapshot based on timestamp within Spark, then write the RDD to HDFS.
+This project shows how to analyze an HBase Snapshot using Spark. 
 <br>
 <br>
-<b>Here's how to run this project:</b>
+<b>Why do this?</b>
 <br>
-  1. Create an HBase table and populate it with data (or you can use an existing table). If you want, you can use the included python script (write_to_hbase.py), which will create an HBase table called "customer_info" with 1 million records.
-  <img src="screenshots/1_create_hbase_table.png" class="inline"/>
+The main motivation for writing this code is to reduce the impact on the HBase Region Servers while analyzing HBase records. By creating a snapshot of the HBase table, we can run Spark jobs against the snapshot, eliminating the impact to region servers and reducing the risk to operational systems.
+<br>
+At a high-level, here's what the code is doing:
+  1. Reads an HBase Snapshot into a Spark
+  2. Parses the HBase KeyValue to a Spark Dataframe
+  3. Applies arbitrary data processing (timestamp and rowkey filtering)
+  4. Saves the results back to an HBase (HFiles / KeyValue) format within HDFS, using HFileOutputFormat.
+       - The output format maintains the original rowkey, timestamp, column family, qualifier, and value structure.
+  5. From here, you can bulkload the HDFS file into HBase.
+<br>
+<b>Here's more detail on how to run this project:</b>
+<br>
+  1. Create an HBase table and populate it with data (or you can use an existing table). I've included two ways to simulate the HBase table within this repo (for testing purposes). Use the <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SimulateAndBulkLoadHBaseData.scala">SimulateAndBulkLoadHBaseData.scala</a> code (preferred method) or you can use <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/write_to_hbase.py">write_to_hbase.py</a> (this is very slow compared to the scala code).
 <br>
 <br>
-  2. Take an HBase Snapshot: <code>snapshot 'customer_info', 'customer_info_ss'</code>
+  2. Take an HBase Snapshot: <code>snapshot 'hbase_simulated_1m', 'hbase_simulated_1m_ss'</code>
 <br>
 <br>
-  3. Load the Hbase Snapshot into HDFS: <code>hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot customer_info_ss -copy-to /tmp/ -mappers 2</code>
+  3. (Optional) The HBase Snapshot will already be in HDFS (at /apps/hbase/data), but you can use this if you want to load the HBase Snapshot to an HDFS location of your choice: <code>hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot hbase_simulated_1m_ss -copy-to /tmp/ -mappers 2</code>
 <br>
 <br>
-  4. Run the included Spark (scala) code against the HBase Snapshot. 
+  4. Run the included Spark (scala) <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SparkReadHBaseSnapshot.scala">code</a> against the HBase Snapshot. This code will read the HBase snapshot, process records, and output the data in an HBase (HFile/KeyValue) format.
 <br>
 <br>
       a.) Build project: <code>mvn clean package</code>
 <br>
 <br>
-      b.) Run Spark job: <code>spark-submit --class com.github.zaratsian.SparkHBase.SparkHBase --master yarn-client /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar props</code>
+      b.) Run Spark job: <code>spark-submit --class com.github.zaratsian.SparkHBase.SparkReadHBaseSnapshot --jars /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar /usr/hdp/current/phoenix-client/phoenix-client.jar /tmp/props
+</code>
 <br>
 <br>
       c.) NOTE: Adjust the properties within the props file (if needed) to match your configuration.
 
 <br>
-The Spark job will read the HBase Snapshot, filter records based on a timestamp threshold (which is set in the props file), the write the resulting RDD back to HDFS.
+The Spark job will read the HBase Snapshot, filter records based on rowkey range (80001 to 90000) and based on a timestamp threshold (which is set in the props file), then write the results back to HDFS in HBase format (HFiles/KeyValue).
 <br>
 <br>
-<b>HBase Scan:</b> Example output from the HBase scan, showing the a few of the raw records in HBase.
-<img src="screenshots/2_hbase_scan.png" class="inline"/>
+<b>Sample output of HBase simulated data structure (using SimulateAndBulkLoadHBaseData.scala):</b>
+<img src="screenshots/Screen Shot 2016-09-27 at 10.58.13 AM.png" class="inline"/>
 <br>
 <br>
-<b>HBase Filtered output in Spark:</b> Example output from Spark showing the filtered output.
-<img src="screenshots/3_hbase_filtered_output_in_spark.png" class="inline"/>
-NOTE: The filtered data (as an RDD) will be saved to HDFS at /tmp/hbase_data_from_spark.
+<b>Sample output of HBase simulated data structure (using write_to_hbase.py):</b>
+<img src="screenshots/1_create_hbase_table.png" class="inline"/>
 <br>
 <br>
 <br><b>Versions:</b>
