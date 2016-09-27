@@ -43,7 +43,7 @@ The main motivation for writing this code is to reduce the impact on the HBase R
 <br><b>Preliminary Performance Metrics:</b>
 <br>
 | Number of Records | Spark Runtime (without write to HDFS) | Spark Runtime (with write to HDFS) |
-|:----------------- |:------------------------------------- |:---------------------------------- |
+|-------------------|---------------------------------------|------------------------------------|
 | 1,000,000         | 27.07 seconds                         | 36.05 seconds                      |
 | 50,000,000        | 417.38 seconds                        | 764.801 seconds                    |
 | 100,000,000       | 741.829 seconds                       | 1413.001 seconds                   |
