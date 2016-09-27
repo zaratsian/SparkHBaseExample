@@ -7,7 +7,7 @@ This project shows how to analyze an HBase Snapshot using Spark.
 <br>
 The main motivation for writing this code is to reduce the impact on the HBase Region Servers while analyzing HBase records. By creating a snapshot of the HBase table, we can run Spark jobs against the snapshot, eliminating the impact to region servers and reducing the risk to operational systems.
 <br>
-At a high-level, here's what the code is doing:
+<br><b>At a high-level, here's what the code is doing:</b>
   1. Reads an HBase Snapshot into a Spark
   2. Parses the HBase KeyValue to a Spark Dataframe
   3. Applies arbitrary data processing (timestamp and rowkey filtering)
@@ -15,7 +15,7 @@ At a high-level, here's what the code is doing:
        - The output format maintains the original rowkey, timestamp, column family, qualifier, and value structure.
   5. From here, you can bulkload the HDFS file into HBase.
 <br>
-<b>Here's more detail on how to run this project:</b>
+<br><b>Here's more detail on how to run this project:</b>
 <br>
   1. Create an HBase table and populate it with data (or you can use an existing table). I've included two ways to simulate the HBase table within this repo (for testing purposes). Use the <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SimulateAndBulkLoadHBaseData.scala">SimulateAndBulkLoadHBaseData.scala</a> code (preferred method) or you can use <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/write_to_hbase.py">write_to_hbase.py</a> (this is very slow compared to the scala code).
 <br>
