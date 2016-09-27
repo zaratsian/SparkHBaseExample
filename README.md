@@ -42,11 +42,34 @@ The main motivation for writing this code is to reduce the impact on the HBase R
 <br>
 <br><b>Preliminary Performance Metrics:</b>
 <br>
-| Number of Records | Spark Runtime (without write to HDFS) | Spark Runtime (with write to HDFS) |
-|-------------------|---------------------------------------|------------------------------------|
-| 1,000,000         | 27.07 seconds                         | 36.05 seconds                      |
-| 50,000,000        | 417.38 seconds                        | 764.801 seconds                    |
-| 100,000,000       | 741.829 seconds                       | 1413.001 seconds                   |
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;}
+.tg .tg-yw4l{vertical-align:top}
+</style>
+<table class="tg">
+  <tr>
+    <th class="tg-yw4l">Number of Records</th>
+    <th class="tg-yw4l">Spark Runtime (without write to HDFS)</th>
+    <th class="tg-yw4l">Spark Runtime (with write to HDFS)</th>
+  </tr>
+  <tr>
+    <td class="tg-yw4l">1,000,000</td>
+    <td class="tg-yw4l">27.07 seconds</td>
+    <td class="tg-yw4l">36.05 seconds</td>
+  </tr>
+  <tr>
+    <td class="tg-yw4l">50,000,000</td>
+    <td class="tg-yw4l">417.38 seconds</td>
+    <td class="tg-yw4l">764.801 seconds</td>
+  </tr>
+  <tr>
+    <td class="tg-yw4l">100,000,000</td>
+    <td class="tg-yw4l">741.829 seconds</td>
+    <td class="tg-yw4l">1413.001 seconds</td>
+  </tr>
+</table>
 <br>
 <br>
 <b>Sample output of HBase simulated data structure (using SimulateAndBulkLoadHBaseData.scala):</b>
