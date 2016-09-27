@@ -82,6 +82,7 @@ The main motivation for writing this code is to reduce the impact on the HBase R
 <br>
 <br>
 <br><b>References:</b>
+<br><a href="http://hbase.apache.org/apidocs/org/apache/hadoop/hbase/HBaseConfiguration">HBaseConfiguration Class</a>
 <br><a href="https://hbase.apache.org/apidocs/org/apache/hadoop/hbase/mapreduce/TableSnapshotInputFormat.html">HBase TableSnapshotInputFormat Class</a>
 <br><a href="https://hbase.apache.org/devapidocs/org/apache/hadoop/hbase/KeyValue.html">HBase KeyValue Class</a>
 <br><a href="https://hbase.apache.org/apidocs/org/apache/hadoop/hbase/util/Bytes.html">HBase Bytes Class</a>
