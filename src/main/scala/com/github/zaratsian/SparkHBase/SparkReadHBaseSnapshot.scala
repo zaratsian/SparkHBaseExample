@@ -1,10 +1,15 @@
 
 /*******************************************************************************************************
 This code does the following:
-  1) Read an HBase Snapshot, and convert to Spark RDD
+  1) Read an HBase Snapshot, and convert to Spark RDD (snapshot name is defined in props file)
   2) Parse the records / KeyValue (extracting column family, column name, timestamp, value, etc)
-  3) Perform general data processing - Filter the data based on timestamp
+  3) Perform general data processing - Filter the data based on timestamp (timestamp threshold variable defined in props file)
   4) Write the results to HDFS (formatted for HBase BulkLoad, saved as HFileOutputFormat)
+
+Usage:
+
+spark-submit --class com.github.zaratsian.SparkHBase.SparkReadHBaseSnapshot --jars /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar /usr/hdp/current/phoenix-client/phoenix-client.jar /tmp/props
+
 ********************************************************************************************************/  
 
 package com.github.zaratsian.SparkHBase;
@@ -52,7 +57,7 @@ import java.lang.String
 
 object SparkReadHBaseSnapshot{
  
-  case class hVar(rowkey: String, colFamily: String, colQualifier: String, colDatetime: Long, colDatetimeStr: String, colType: String, colValue: String)
+  case class hVar(rowkey: Int, colFamily: String, colQualifier: String, colDatetime: Long, colDatetimeStr: String, colType: String, colValue: String)
  
   def main(args: Array[String]) {
 
@@ -97,7 +102,7 @@ object SparkReadHBaseSnapshot{
 
     val df = keyValue.flatMap(x =>  x.asScala.map(cell =>
         hVar(
-            Bytes.toStringBinary(CellUtil.cloneRow(cell)),
+            Bytes.toInt(CellUtil.cloneRow(cell)),
             Bytes.toStringBinary(CellUtil.cloneFamily(cell)),
             Bytes.toStringBinary(CellUtil.cloneQualifier(cell)),
             cell.getTimestamp,
@@ -116,11 +121,10 @@ object SparkReadHBaseSnapshot{
     val datetime_threshold_long = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").parse(datetime_threshold).getTime()
     println("[ *** ] Filtering/Keeping all SnapShot records that are more recent (greater) than the datetime_threshold (set in the props file): " + datetime_threshold.toString)
     
-    // Filter Dataframe...
+    println("[ *** ] Filtering Dataframe")
     val df_filtered = df.filter($"colDatetime" >= datetime_threshold_long)
-    
-    // ...or Filter RDD
-/*
+
+/*  // Filter RDD (alternative, but using a DF is a better option)
     val rdd_filtered = keyValue.flatMap(x => x.asScala.map(cell =>
           {(
             Bytes.toStringBinary(CellUtil.cloneRow(cell)),
@@ -133,47 +137,41 @@ object SparkReadHBaseSnapshot{
           )}
        )).filter(x => x._4>=datetime_threshold_long)
 */
-
+ 
     println("[ *** ] Filtered dataframe contains " + df_filtered.count() + " records")
     //println("[ *** ] Printing filtered HBase SnapShot records (10 records)")
     //df_filtered.show(10, false)
-    //rdd_filtered.take(10).foreach(x => println(x))
 
-/*
-    // Convert RDD to KeyValue
+    // For testing purposes, print datatypes
+    df_filtered.dtypes.toList.foreach(x => println(x))
+
+    // Convert DF to KeyValue
+    println("[ *** ] Converting dataframe to RDD so that it can be written as HFileOutputFormat using saveAsNewAPIHadoopFile")
+    val rdd_from_df = df_filtered.rdd.map(x => {
+        val kv: KeyValue = new KeyValue( Bytes.toBytes(x(0).asInstanceOf[Int]), x(1).toString.getBytes(), x(2).toString.getBytes(), x(3).asInstanceOf[Long], x(6).toString.getBytes() )
+        (new ImmutableBytesWritable( Bytes.toBytes(x(0).asInstanceOf[Int]) ), kv)
+    })
+
+/*  // Convert RDD to KeyValue
     val rdd_to_hbase = rdd_filtered.map(x=>{
       val kv: KeyValue = new KeyValue(Bytes.toBytes(x._1), x._2.getBytes(), x._3.getBytes(), x._7.getBytes() )
         (new ImmutableBytesWritable(Bytes.toBytes(x._1)), kv)
       })
-
-    println("[ *** ] Printing rdd_to_hbase (10 records of keyvalue)...")
-    rdd_to_hbase.map(x => x._2.toString).take(10).foreach(x => println(x))
 */
 
-    // Converting dataframe to RDD so that it can be written as HFileOutputFormat using saveAsNewAPIHadoopFile
-    val rdd_from_df = df_filtered.rdd.map(x => {
-        val kv: KeyValue = new KeyValue(Bytes.toBytes(x(0).toString), x(1).toString.getBytes(), x(2).toString.getBytes(), x(3).asInstanceOf[Long], x(6).toString.getBytes() )
-        (new ImmutableBytesWritable(Bytes.toBytes(x(0).toString)), kv)
-    })
-
     val time_snapshot_processing = Calendar.getInstance()
+    println("[ *** ] Runtime for Snapshot Processing: " + ((time_snapshot_processing.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")
 
     // Configure HBase output settings
-    val hTableName = "sparkhbasebulkload"
+    val hTableName = snapName + "_filtered"
     val hConf2 = HBaseConfiguration.create()
     hConf2.set("zookeeper.znode.parent", "/hbase-unsecure")
     hConf2.set(TableOutputFormat.OUTPUT_TABLE, hTableName)
 
     println("[ *** ] Saving results to HDFS as HBase KeyValue HFileOutputFormat. This makes it easy to BulkLoad into HBase (see SparkHBaseBulkLoad.scala for bulkload code)") 
-    rdd_from_df.map(x => x._2.toString).take(10).foreach(x => println(x))
+    //rdd_from_df.map(x => x._2.toString).take(10).foreach(x => println(x))
     rdd_from_df.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
     println("[ *** ] Saved " + rdd_from_df.count() + " records to HDFS, located in /tmp/" + hTableName)   
-
-/*
-    println("[ *** ] Saving DF  (Count = " + df_filtered.count()  + ")")
-    //rdd_to_hbase.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
-    df_filtered.save("/tmp/sparkhbase_df")
-*/
 
 
     sc.stop()
@@ -182,6 +180,7 @@ object SparkReadHBaseSnapshot{
     // Print Total Runtime
     val end_time = Calendar.getInstance()
     println("[ *** ] End Time: " + end_time.getTime().toString)
+    println("[ *** ] Saved " + rdd_from_df.count() + " records to HDFS, located in /tmp/" + hTableName)
     println("[ *** ] Runtime for Snapshot Processing:                 " + ((time_snapshot_processing.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")
     println("[ *** ] Runtime for Snapshot Processing, saving to HDFS: " + ((end_time.getTimeInMillis() - start_time.getTimeInMillis()).toFloat/1000).toString + " seconds")   
 
