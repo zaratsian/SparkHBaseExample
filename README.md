@@ -21,10 +21,11 @@ The main motivation for writing this code is to reduce the impact on the HBase R
   1. Create an HBase table and populate it with data (or you can use an existing table). I've included two ways to simulate the HBase table within this repo (for testing purposes). Use the <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SimulateAndBulkLoadHBaseData.scala">SimulateAndBulkLoadHBaseData.scala</a> code (preferred method) or you can use <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/write_to_hbase.py">write_to_hbase.py</a> (this is very slow compared to the scala code).
 <br>
 <br>
-  2. Take an HBase Snapshot: <code>snapshot 'hbase_simulated_1m', 'hbase_simulated_1m_ss'</code>
+  2. Take an HBase Snapshot: ```snapshot 'hbase_simulated_1m', 'hbase_simulated_1m_ss'```
 <br>
 <br>
-  3. (Optional) The HBase Snapshot will already be in HDFS (at /apps/hbase/data), but you can use this if you want to load the HBase Snapshot to an HDFS location of your choice: ```hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot hbase_simulated_1m_ss -copy-to /tmp/ -mappers 2```
+  3. (Optional) The HBase Snapshot will already be in HDFS (at /apps/hbase/data), but you can use this if you want to load the HBase Snapshot to an HDFS location of your choice:
+  <br>```hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot hbase_simulated_1m_ss -copy-to /tmp/ -mappers 2```
 <br>
 <br>
   4. Run the included Spark (scala) <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SparkReadHBaseSnapshot.scala">code</a> against the HBase Snapshot. This code will read the HBase snapshot, process records, and output the data in an HBase (HFile/KeyValue) format.
