@@ -14,6 +14,7 @@ The main motivation for writing this code is to reduce the impact on the HBase R
   4. Saves the results back to an HBase (HFiles / KeyValue) format within HDFS, using HFileOutputFormat.
        - The output format maintains the original rowkey, timestamp, column family, qualifier, and value structure.
   5. From here, you can bulkload the HDFS file into HBase.
+
 <br>
 <br><b>Here's more detail on how to run this project:</b>
 <br>
@@ -23,17 +24,16 @@ The main motivation for writing this code is to reduce the impact on the HBase R
   2. Take an HBase Snapshot: <code>snapshot 'hbase_simulated_1m', 'hbase_simulated_1m_ss'</code>
 <br>
 <br>
-  3. (Optional) The HBase Snapshot will already be in HDFS (at /apps/hbase/data), but you can use this if you want to load the HBase Snapshot to an HDFS location of your choice: <code>hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot hbase_simulated_1m_ss -copy-to /tmp/ -mappers 2</code>
+  3. (Optional) The HBase Snapshot will already be in HDFS (at /apps/hbase/data), but you can use this if you want to load the HBase Snapshot to an HDFS location of your choice: ```hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot hbase_simulated_1m_ss -copy-to /tmp/ -mappers 2```
 <br>
 <br>
   4. Run the included Spark (scala) <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SparkReadHBaseSnapshot.scala">code</a> against the HBase Snapshot. This code will read the HBase snapshot, process records, and output the data in an HBase (HFile/KeyValue) format.
 <br>
 <br>
-      a.) Build project: <code>mvn clean package</code>
+      a.) Build project: ```mvn clean package```
 <br>
 <br>
-      b.) Run Spark job: <code>spark-submit --class com.github.zaratsian.SparkHBase.SparkReadHBaseSnapshot --jars /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar /usr/hdp/current/phoenix-client/phoenix-client.jar /tmp/props
-</code>
+      b.) Run Spark job: ```spark-submit --class com.github.zaratsian.SparkHBase.SparkReadHBaseSnapshot --jars /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar /usr/hdp/current/phoenix-client/phoenix-client.jar /tmp/props```
 <br>
 <br>
       c.) NOTE: Adjust the properties within the props file (if needed) to match your configuration.
