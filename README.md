@@ -16,7 +16,7 @@ The main motivation for writing this code is to reduce the impact on the HBase R
   5. From here, you can bulkload the HDFS file into HBase.
 
 <br>
-<br><b>Here's more detail on how to run this project:</b>
+<b>Here's more detail on how to run this project:</b>
 <br>
   1. Create an HBase table and populate it with data (or you can use an existing table). I've included two ways to simulate the HBase table within this repo (for testing purposes). Use the <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SimulateAndBulkLoadHBaseData.scala">SimulateAndBulkLoadHBaseData.scala</a> code (preferred method) or you can use <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/write_to_hbase.py">write_to_hbase.py</a> (this is very slow compared to the scala code).
 <br>
@@ -52,7 +52,14 @@ The Spark job will read the HBase Snapshot, filter records based on rowkey range
 <br>
 <br>
 <br><b>Versions:</b>
-<br>This code was tested using <a href="http://hortonworks.com/products/data-center/hdp/">Hortonworks HDP</a> 2.4.2.0-258 
-<br>HBase version 1.1.2.2.4.2.0-258
-<br>Spark version 1.6.1
-<br>Scala version 2.10.5 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_40) 
+<br>This code was tested using <a href="http://hortonworks.com/products/data-center/hdp/">Hortonworks HDP</a> HDP-2.5.0.0 
+<br>HBase version 1.1.2
+<br>Spark version 1.6.2
+<br>Scala version 2.10.5
+<br>
+<br>
+<br><b>References:</b>
+<br><a href="https://hbase.apache.org/apidocs/org/apache/hadoop/hbase/mapreduce/TableSnapshotInputFormat.html">HBase TableSnapshotInputFormat Class</a>
+<br><a href="https://hbase.apache.org/devapidocs/org/apache/hadoop/hbase/KeyValue.html">HBase KeyValue Class</a>
+<br><a href="https://hbase.apache.org/apidocs/org/apache/hadoop/hbase/util/Bytes.html">HBase Bytes Class</a>
+<br><a href="https://hbase.apache.org/apidocs/org/apache/hadoop/hbase/CellUtil.html">HBase CellUtil Class</a>
