@@ -47,23 +47,28 @@ The main motivation for writing this code is to reduce the impact on the HBase R
     <th class="tg-yw4l">Number of Records</th>
     <th class="tg-yw4l">Spark Runtime (without write to HDFS)</th>
     <th class="tg-yw4l">Spark Runtime (with write to HDFS)</th>
+    <th class="tg-yw4l">HBase Shell Scan (without write to HDFS)</th>
   </tr>
   <tr>
     <td class="tg-yw4l">1,000,000</td>
     <td class="tg-yw4l">27.07 seconds</td>
     <td class="tg-yw4l">36.05 seconds</td>
+    <td class="tg-yw4l">6.8600 seconds</td>
   </tr>
   <tr>
     <td class="tg-yw4l">50,000,000</td>
     <td class="tg-yw4l">417.38 seconds</td>
     <td class="tg-yw4l">764.801 seconds</td>
+    <td class="tg-yw4l">7.5970 seconds</td>
   </tr>
   <tr>
     <td class="tg-yw4l">100,000,000</td>
     <td class="tg-yw4l">741.829 seconds</td>
     <td class="tg-yw4l">1413.001 seconds</td>
+    <td class="tg-yw4l">8.1380 seconds</td>
   </tr>
 </table>
+<br><b>NOTE:</b> Here is the HBase Shell scan that was used ```scan 'hbase_simulated_100m', {STARTROW => "\x00\x01\x38\x81", ENDROW => "\x00\x01\x5F\x90", TIMERANGE => [1474571655001,9999999999999]}```. This scan will filtered a 100 Million record HBase table based on rowkey range of 80001-90000 (\x00\x01\x38\x81 - \x00\x01\x5F\x90) and also from an arbitrary timerange, specified in unix timestamp.
 <br>
 <br>
 <b>Sample output of HBase simulated data structure (using SimulateAndBulkLoadHBaseData.scala):</b>
