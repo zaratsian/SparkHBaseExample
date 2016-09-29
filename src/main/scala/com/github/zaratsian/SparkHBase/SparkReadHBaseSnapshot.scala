@@ -65,6 +65,7 @@ object SparkReadHBaseSnapshot{
     println("[ *** ] Start Time: " + start_time.getTime().toString)
     
     val props = getProps(args(0))
+    val max_versions : Int = props.getOrElse("hbase.snapshot.versions","3").toInt
     
     val sparkConf = new SparkConf().setAppName("SparkReadHBaseSnapshot")
     val sc = new SparkContext(sparkConf)
@@ -75,7 +76,7 @@ object SparkReadHBaseSnapshot{
     val hConf = HBaseConfiguration.create()
     hConf.set("hbase.rootdir", props.getOrElse("hbase.rootdir", "/tmp"))
     hConf.set("hbase.zookeeper.quorum",  props.getOrElse("hbase.zookeeper.quorum", "localhost:2181:/hbase-unsecure"))
-    hConf.set(TableInputFormat.SCAN, convertScanToString(new Scan))
+    hConf.set(TableInputFormat.SCAN, convertScanToString(new Scan().setMaxVersions(max_versions)) )
 
     val job = Job.getInstance(hConf)
 
@@ -139,11 +140,11 @@ object SparkReadHBaseSnapshot{
 */
  
     println("[ *** ] Filtered dataframe contains " + df_filtered.count() + " records")
-    //println("[ *** ] Printing filtered HBase SnapShot records (10 records)")
-    //df_filtered.show(10, false)
+    println("[ *** ] Printing filtered HBase SnapShot records (10 records)")
+    df_filtered.show(10, false)
 
     // For testing purposes, print datatypes
-    df_filtered.dtypes.toList.foreach(x => println(x))
+    //df_filtered.dtypes.toList.foreach(x => println(x))
 
     // Convert DF to KeyValue
     println("[ *** ] Converting dataframe to RDD so that it can be written as HFileOutputFormat using saveAsNewAPIHadoopFile")
@@ -171,8 +172,6 @@ object SparkReadHBaseSnapshot{
     //println("[ *** ] Saving results to HDFS as HBase KeyValue HFileOutputFormat. This makes it easy to BulkLoad into HBase (see SparkHBaseBulkLoad.scala for bulkload code)") 
     //rdd_from_df.map(x => x._2.toString).take(10).foreach(x => println(x))
     rdd_from_df.saveAsNewAPIHadoopFile("/tmp/" + hTableName, classOf[ImmutableBytesWritable], classOf[KeyValue], classOf[HFileOutputFormat], hConf2)
-
-
 
     // Print Total Runtime
     val end_time = Calendar.getInstance()
