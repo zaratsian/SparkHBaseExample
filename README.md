@@ -21,20 +21,20 @@ The main motivation for writing this code is to reduce the impact on the HBase R
   1. Create an HBase table and populate it with data (or you can use an existing table). I've included two ways to simulate the HBase table within this repo (for testing purposes). Use the <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SimulateAndBulkLoadHBaseData.scala">SimulateAndBulkLoadHBaseData.scala</a> code (preferred method) or you can use <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/write_to_hbase.py">write_to_hbase.py</a> (this is very slow compared to the scala code).
 <br>
 <br>
-  2. Take an HBase Snapshot: ```snapshot 'hbase_simulated_1m', 'hbase_simulated_1m_ss'```
+  2. Take an HBase Snapshot: <code>snapshot 'hbase_simulated_1m', 'hbase_simulated_1m_ss'</code>
 <br>
 <br>
   3. (Optional) The HBase Snapshot will already be in HDFS (at /apps/hbase/data), but you can use this if you want to load the HBase Snapshot to an HDFS location of your choice:
-  <br>```hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot hbase_simulated_1m_ss -copy-to /tmp/ -mappers 2```
+  <br><code>hbase org.apache.hadoop.hbase.snapshot.ExportSnapshot -snapshot hbase_simulated_1m_ss -copy-to /tmp/ -mappers 2</code>
 <br>
 <br>
   4. Run the included Spark (scala) <a href="https://github.com/zaratsian/SparkHBaseExample/blob/master/src/main/scala/com/github/zaratsian/SparkHBase/SparkReadHBaseSnapshot.scala">code</a> against the HBase Snapshot. This code will read the HBase snapshot, filter records based on rowkey range (80001 to 90000) and based on a timestamp threshold (which is set in the props file), then write the results back to HDFS in HBase format (HFiles/KeyValue).
 <br>
 <br>
-      a.) Build project: ```mvn clean package```
+      a.) Build project: <code>mvn clean package</code>
 <br>
 <br>
-      b.) Run Spark job: ```spark-submit --class com.github.zaratsian.SparkHBase.SparkReadHBaseSnapshot --jars /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar /usr/hdp/current/phoenix-client/phoenix-client.jar /tmp/props```
+      b.) Run Spark job: <code>spark-submit --class com.github.zaratsian.SparkHBase.SparkReadHBaseSnapshot --jars /tmp/SparkHBaseExample-0.0.1-SNAPSHOT.jar /usr/hdp/current/phoenix-client/phoenix-client.jar /tmp/props</code>
 <br>
 <br>
       c.) NOTE: Adjust the properties within the props file (if needed) to match your configuration.
@@ -68,7 +68,7 @@ The main motivation for writing this code is to reduce the impact on the HBase R
     <td class="tg-yw4l">8.1380 seconds</td>
   </tr>
 </table>
-<br><b>NOTE:</b> Here is the HBase Shell scan that was used ```scan 'hbase_simulated_100m', {STARTROW => "\x00\x01\x38\x81", ENDROW => "\x00\x01\x5F\x90", TIMERANGE => [1474571655001,9999999999999]}```. This scan will filtered a 100 Million record HBase table based on rowkey range of 80001-90000 (\x00\x01\x38\x81 - \x00\x01\x5F\x90) and also from an arbitrary timerange, specified in unix timestamp.
+<br><b>NOTE:</b> Here is the HBase Shell scan that was used <code>scan 'hbase_simulated_100m', {STARTROW => "\x00\x01\x38\x81", ENDROW => "\x00\x01\x5F\x90", TIMERANGE => [1474571655001,9999999999999]}</code>. This scan will filtered a 100 Million record HBase table based on rowkey range of 80001-90000 (\x00\x01\x38\x81 - \x00\x01\x5F\x90) and also from an arbitrary timerange, specified in unix timestamp.
 <br>
 <br>
 <b>Sample output of HBase simulated data structure (using SimulateAndBulkLoadHBaseData.scala):</b>
